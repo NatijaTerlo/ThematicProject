@@ -28,8 +28,9 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
-    public void deleteRecipe(Long id) {
+    public boolean deleteRecipe(Long id) {
         recipeRepository.deleteById(id);
+        return false;
     }
 
     public List<Recipe> findRecipesByIngredients(List<String> ingredients) {
@@ -52,6 +53,8 @@ public class RecipeService {
     }
 
 
-
+    public Recipe createRecipe(Recipe recipe) {
+        return recipeRepository.save(recipe);
+    }
 }
 

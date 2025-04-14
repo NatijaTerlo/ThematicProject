@@ -2,8 +2,6 @@ package com.example.thematicproject.models;
 
 import jakarta.persistence.*;
 
-import java.util.Set;
-
 @Entity
 public class Ingredient {
 
@@ -11,13 +9,13 @@ public class Ingredient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String name; // Пример поля для ингредиента
+    private String name;
 
-    @ManyToMany(mappedBy = "ingredients")  // Это должно ссылаться на поле в Recipe
-    private Set<Recipe> recipes;
+    @ManyToOne
+    @JoinColumn(name = "recipe_id")
+    private Recipe recipe;
 
-    // Геттеры и сеттеры
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -34,11 +32,11 @@ public class Ingredient {
         this.name = name;
     }
 
-    public Set<Recipe> getRecipes() {
-        return recipes;
+    public Recipe getRecipe() {
+        return recipe;
     }
 
-    public void setRecipes(Set<Recipe> recipes) {
-        this.recipes = recipes;
+    public void setRecipe(Recipe recipe) {
+        this.recipe = recipe;
     }
 }

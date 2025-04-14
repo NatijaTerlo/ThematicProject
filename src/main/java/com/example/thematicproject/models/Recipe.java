@@ -1,9 +1,9 @@
 package com.example.thematicproject.models;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
+import org.springframework.lang.NonNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -13,18 +13,17 @@ public class Recipe {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NonNull
     private String name;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "recipe_ingredient",
-            joinColumns = @JoinColumn(name = "recipe_id"),
-            inverseJoinColumns = @JoinColumn(name = "ingredient_id")
-    )
-    @JsonManagedReference  // Для предотвращения цикличности при сериализации
-    private Set<Ingredient> ingredients = new HashSet<>();
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private Set<Ingredient> ingredients;
 
-    // Геттеры и сеттеры
+    // Constructor
+    public Recipe() {}
+
+    // Getters and Setters
     public Long getId() {
         return id;
     }

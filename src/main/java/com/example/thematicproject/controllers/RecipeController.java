@@ -1,17 +1,20 @@
 package com.example.thematicproject.controllers;
 
-
 import com.example.thematicproject.models.Recipe;
+
 import com.example.thematicproject.services.IngredientService;
 import com.example.thematicproject.services.RecipeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
-@CrossOrigin(origins = "http://localhost:63342") // Adjust to match your frontend URL
+
+@CrossOrigin(origins = "http://localhost:63342") // Allowed CORS for local frontend
 @RestController
-@RequestMapping("/recipes")
+@RequestMapping("/recipes") // Base URL for all endpoints
 public class RecipeController {
+
     private final RecipeService recipeService;
     private final IngredientService ingredientService;
 
@@ -20,11 +23,13 @@ public class RecipeController {
         this.ingredientService = ingredientService;
     }
 
+    // GET: Fetch all recipes
     @GetMapping
     public List<Recipe> getAllRecipes() {
         return recipeService.getAllRecipes();
     }
 
+    // GET: Fetch a recipe by ID
     @GetMapping("/{id}")
     public ResponseEntity<Recipe> getRecipeById(@PathVariable Long id) {
         return recipeService.getRecipeById(id)
@@ -32,35 +37,34 @@ public class RecipeController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // DELETE: Delete a recipe by ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteIngredient(@PathVariable Long id) {
-        ingredientService.deleteIngredient(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deleteRecipe(@PathVariable Long id) {
+        boolean isDeleted = recipeService.deleteRecipe(id); // Ensure delete logic in service layer
+        return isDeleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/find")
-    public ResponseEntity<List<Recipe>> findRecipes(@RequestBody List<String> ingredients) {
+    public ResponseEntity<List<Recipe>> findRecipes(@RequestBody IngredientRequest request) {
+        List<String> ingredients = request.getIngredients();
         if (ingredients == null || ingredients.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 if ingredients are empty
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
-        try {
-            List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredients);
-            if (recipes.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 if no recipes found
-            }
-            return new ResponseEntity<>(recipes, HttpStatus.OK); // 200 OK if recipes found
-        } catch (Exception e) {
-            // Log the error to track the issue
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 if something went wrong
-        }
+        List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredients);
+        return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
 
 
+    // POST: Create a new recipe
     @PostMapping
     public ResponseEntity<String> createRecipe(@RequestBody Recipe recipe) {
-        // Logic for creating a new recipe
-        return ResponseEntity.ok("Recipe created successfully");
+        recipeService.createRecipe(recipe);
+        return new ResponseEntity<>("Recipe created successfully", HttpStatus.CREATED); // 201 Created
+    }
+
+    // GET: Test connection
+    @GetMapping("/test")
+    public String testConnection() {
+        return "✅ Backend is up!";
     }
 }
