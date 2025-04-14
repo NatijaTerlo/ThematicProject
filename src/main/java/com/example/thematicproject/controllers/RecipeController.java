@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+@CrossOrigin(origins = "http://localhost:63342") // Adjust to match your frontend URL
 @RestController
 @RequestMapping("/recipes")
 public class RecipeController {
@@ -39,9 +40,23 @@ public class RecipeController {
 
     @PostMapping("/find")
     public ResponseEntity<List<Recipe>> findRecipes(@RequestBody List<String> ingredients) {
-        List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredients);
-        return new ResponseEntity<>(recipes, HttpStatus.OK);
+        if (ingredients == null || ingredients.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // 400 if ingredients are empty
+        }
+
+        try {
+            List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredients);
+            if (recipes.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 if no recipes found
+            }
+            return new ResponseEntity<>(recipes, HttpStatus.OK); // 200 OK if recipes found
+        } catch (Exception e) {
+            // Log the error to track the issue
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 if something went wrong
+        }
     }
+
 
     @PostMapping
     public ResponseEntity<String> createRecipe(@RequestBody Recipe recipe) {
