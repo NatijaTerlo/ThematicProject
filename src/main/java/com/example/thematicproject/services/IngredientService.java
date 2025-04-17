@@ -31,4 +31,15 @@ public class IngredientService {
     public void deleteIngredient(Long id) {
         ingredientRepository.deleteById(id);
     }
+
+    public List<Ingredient> saveAllIngredients(List<Ingredient> ingredients) {
+        for (Ingredient ingredient : ingredients) {
+            Optional<Ingredient> existing = ingredientRepository.findByName(ingredient.getName());
+            if (existing.isEmpty()) {
+                ingredientRepository.save(ingredient);
+            }
+        }
+        return ingredients;
+    }
+
 }

@@ -2,13 +2,16 @@ package com.example.thematicproject.controllers;
 
 import com.example.thematicproject.models.Ingredient;
 import com.example.thematicproject.models.Recipe;
+import com.example.thematicproject.repositories.IngredientRepository;
 import com.example.thematicproject.services.IngredientService;
 import com.example.thematicproject.services.RecipeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @CrossOrigin(origins = "*") // Tillader frontend kald fra browseren
 @RestController
@@ -17,10 +20,12 @@ public class IngredientController {
 
     private final IngredientService ingredientService;
     private final RecipeService recipeService;
+    private final IngredientRepository ingredientRepository;
 
-    public IngredientController(IngredientService ingredientService, RecipeService recipeService) {
+    public IngredientController(IngredientService ingredientService, RecipeService recipeService, IngredientRepository ingredientRepository) {
         this.ingredientService = ingredientService;
         this.recipeService = recipeService;
+        this.ingredientRepository = ingredientRepository;
     }
 
     @GetMapping("/{id}")
@@ -70,4 +75,31 @@ public class IngredientController {
             this.ingredients = ingredients;
         }
     }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<List<Ingredient>> createIngredients(@RequestBody List<Ingredient> ingredients) {
+        if (ingredients == null || ingredients.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<Ingredient> saved = ingredientService.saveAllIngredients(ingredients);
+        return ResponseEntity.ok(saved);
+    }
+
+    public List<Ingredient> saveAllIngredients(List<Ingredient> ingredients) {
+        List<Ingredient> savedIngredients = new ArrayList<>();
+
+        for (Ingredient ingredient : ingredients) {
+            Optional<Ingredient> existing = ingredientRepository.findByName(ingredient.getName());
+            if (existing.isPresent()) {
+                savedIngredients.add(existing.get());
+            } else {
+                savedIngredients.add(ingredientRepository.save(ingredient));
+            }
+        }
+
+        return savedIngredients;
+    }
+
+
 }
