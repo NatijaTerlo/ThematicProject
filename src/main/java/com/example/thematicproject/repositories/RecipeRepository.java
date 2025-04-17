@@ -2,6 +2,7 @@ package com.example.thematicproject.repositories;
 
 
 
+import com.example.thematicproject.models.Ingredient;
 import com.example.thematicproject.models.Recipe;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,13 +14,20 @@ import java.util.List;
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
 
-    @Query("SELECT r FROM Recipe r JOIN r.ingredients i WHERE LOWER(i.name) IN :ingredientNames GROUP BY r.id HAVING COUNT(DISTINCT i.name) = :ingredientCount")
-    List<Recipe> findRecipesByIngredientNames(@Param("ingredientNames") List<String> ingredientNames,
-                                              @Param("ingredientCount") long ingredientCount);
+    @Query("SELECT r FROM Recipe r JOIN r.ingredients i WHERE i IN :ingredients")
+    List<Recipe> findByIngredientsIn(List<Ingredient> ingredients);
 
-    @Query("SELECT r FROM Recipe r JOIN r.ingredients i WHERE i.name IN :ingredientNames GROUP BY r.id HAVING COUNT(DISTINCT i.name) = :ingredientCount")
-    List<Recipe> findRecipesByAllIngredientNames(@Param("ingredientNames") List<String> ingredientNames, @Param("ingredientCount") long ingredientCount);
+    List<Recipe> findByIngredients_NameIgnoreCase(String ingredientName);
+
+    @Query("SELECT r FROM Recipe r JOIN r.ingredients i WHERE i.name IN :ingredientNames")
+    List<Recipe> findRecipesByIngredientNames(@Param("ingredientNames") List<String> ingredientNames);
+
 }
+
+
+
+
+
 
 
 

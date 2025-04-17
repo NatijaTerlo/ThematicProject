@@ -1,11 +1,14 @@
 package com.example.thematicproject.controllers;
 
 import com.example.thematicproject.DTO.RecipeDTO;
+import com.example.thematicproject.models.Ingredient;
 import com.example.thematicproject.models.Recipe;
 import com.example.thematicproject.models.User;
+import com.example.thematicproject.repositories.IngredientRepository;
 import com.example.thematicproject.repositories.RecipeRepository;
 import com.example.thematicproject.repositories.UserRepository;
 import com.example.thematicproject.services.RecipeService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +22,14 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/recipes")
 public class RecipeController {
+    @Autowired
+    private RecipeRepository recipeRepository;
+    @Autowired
+    private IngredientRepository ingredientRepository;
 
     private final RecipeService recipeService;
     private final UserRepository userRepository;
-    private final RecipeRepository recipeRepository;
+
 
     public RecipeController(RecipeService recipeService, UserRepository userRepository, RecipeRepository recipeRepository) {
         this.recipeService = recipeService;
@@ -30,11 +37,7 @@ public class RecipeController {
         this.recipeRepository = recipeRepository;
     }
 
-    @PostMapping(consumes = "application/json")
-    public ResponseEntity<Recipe> addRecipe(@RequestBody RecipeDTO recipeDTO) {
-        Recipe newRecipe = recipeService.createRecipe(recipeDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newRecipe);
-    }
+
 
     @GetMapping
     public List<Recipe> getAllRecipes() {
@@ -121,4 +124,28 @@ public class RecipeController {
 
         return demoRecipes;
     }
+
+    @PostMapping(consumes = "application/json")
+    public ResponseEntity<Recipe> addRecipe(@RequestBody RecipeDTO recipeDTO) {
+        Recipe newRecipe = recipeService.createRecipe(recipeDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newRecipe);
+    }
+
+
+    @GetMapping("/getrecipebyingredients")
+    public ResponseEntity<List<Recipe>> getRecipeByIngredients(@RequestParam List<String> ingredientNames) {
+        List<Ingredient> ingredients = ingredientRepository.findByNameIn(ingredientNames);
+
+        if (ingredients.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        List<Recipe> recipes = recipeRepository.findByIngredientsIn(ingredients);
+
+        return ResponseEntity.ok(recipes);
+    }
+
+
 }
+
+

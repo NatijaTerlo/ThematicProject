@@ -5,6 +5,7 @@ import com.example.thematicproject.models.Recipe;
 import com.example.thematicproject.repositories.IngredientRepository;
 import com.example.thematicproject.services.IngredientService;
 import com.example.thematicproject.services.RecipeService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +19,11 @@ import java.util.Optional;
 @RequestMapping("/ingredients")
 public class IngredientController {
 
+    @Autowired
+    private RecipeService recipeService;
+
     private final IngredientService ingredientService;
-    private final RecipeService recipeService;
+
     private final IngredientRepository ingredientRepository;
 
     public IngredientController(IngredientService ingredientService, RecipeService recipeService, IngredientRepository ingredientRepository) {
@@ -27,6 +31,8 @@ public class IngredientController {
         this.recipeService = recipeService;
         this.ingredientRepository = ingredientRepository;
     }
+
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Ingredient> getIngredientById(@PathVariable Long id) {
@@ -63,18 +69,6 @@ public class IngredientController {
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
 
-    // 🔧 DTO til at modtage JSON fra frontend
-    public static class IngredientRequest {
-        private List<String> ingredients;
-
-        public List<String> getIngredients() {
-            return ingredients;
-        }
-
-        public void setIngredients(List<String> ingredients) {
-            this.ingredients = ingredients;
-        }
-    }
 
     @PostMapping("/bulk")
     public ResponseEntity<List<Ingredient>> createIngredients(@RequestBody List<Ingredient> ingredients) {
@@ -90,7 +84,7 @@ public class IngredientController {
         List<Ingredient> savedIngredients = new ArrayList<>();
 
         for (Ingredient ingredient : ingredients) {
-            Optional<Ingredient> existing = ingredientRepository.findByName(ingredient.getName());
+            Optional<Ingredient> existing = Optional.ofNullable(ingredientRepository.findByName(ingredient.getName()));
             if (existing.isPresent()) {
                 savedIngredients.add(existing.get());
             } else {
@@ -99,6 +93,40 @@ public class IngredientController {
         }
 
         return savedIngredients;
+    }
+
+
+    @GetMapping("/getrecipebyingredientname") // For Zuhair
+    public ResponseEntity<List<Recipe>> getRecipeByIngredientName(@RequestParam String ingredientName) {
+        List<Recipe> recipes = recipeService.getRecipeByIngredientName(ingredientName);
+        return ResponseEntity.ok(recipes);
+    }
+
+    @PostMapping("/createrecipe")
+    public ResponseEntity<Recipe> createRecipe(@RequestBody RecipeRequest request) {
+        Recipe recipe = recipeService.createRecipeWithIngredients(request.getName(), request.getIngredients());
+        return new ResponseEntity<>(recipe, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/names")
+    public ResponseEntity<List<String>> getAllIngredientNames() {
+        List<String> ingredientNames = ingredientService.getAllIngredientNames();
+        return ResponseEntity.ok(ingredientNames);
+    }
+    @PostMapping("/findRecipes")
+    public ResponseEntity<List<Recipe>> findRecipesByIngredients(@RequestBody List<String> ingredients) {
+        // Call a service to get recipes based on ingredient names
+        if (ingredients == null || ingredients.isEmpty()) {
+            return ResponseEntity.badRequest().build(); // If no ingredients provided, return bad request
+        }
+
+        List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredients);
+
+        if (recipes.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // No recipes found
+        }
+
+        return ResponseEntity.ok(recipes); // Return recipes as the response
     }
 
 

@@ -2,6 +2,7 @@ package com.example.thematicproject.models;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -19,7 +20,8 @@ public class Recipe {
             joinColumns = @JoinColumn(name = "recipe_id"),
             inverseJoinColumns = @JoinColumn(name = "ingredient_id")
     )
-    private List<Ingredient> ingredients; // Make sure this is a List<Ingredient>
+
+    private List<Ingredient> ingredients = new ArrayList<>(); // Make sure this is a List<Ingredient>
 
     public <T> Recipe(String vegetableStirFry, List<T> list) {
 

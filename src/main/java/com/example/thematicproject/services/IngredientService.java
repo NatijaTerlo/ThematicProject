@@ -2,16 +2,18 @@ package com.example.thematicproject.services;
 
 import com.example.thematicproject.models.Ingredient;
 import com.example.thematicproject.repositories.IngredientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class IngredientService {
 
     private final IngredientRepository ingredientRepository;
-
+    @Autowired
     public IngredientService(IngredientRepository ingredientRepository) {
         this.ingredientRepository = ingredientRepository;
     }
@@ -34,7 +36,7 @@ public class IngredientService {
 
     public List<Ingredient> saveAllIngredients(List<Ingredient> ingredients) {
         for (Ingredient ingredient : ingredients) {
-            Optional<Ingredient> existing = ingredientRepository.findByName(ingredient.getName());
+            Ingredient existing = ingredientRepository.findByName(ingredient.getName());
             if (existing.isEmpty()) {
                 ingredientRepository.save(ingredient);
             }
@@ -42,4 +44,10 @@ public class IngredientService {
         return ingredients;
     }
 
+    public List<String> getAllIngredientNames() {
+            List<Ingredient> ingredients = ingredientRepository.findAll();
+            return ingredients.stream()
+                    .map(Ingredient::getName)  // Assuming Ingredient has a 'name' field
+                    .collect(Collectors.toList());
+    }
 }

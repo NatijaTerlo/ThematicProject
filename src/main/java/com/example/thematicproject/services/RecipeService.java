@@ -5,18 +5,26 @@ import com.example.thematicproject.DTO.RecipeDTO;
 
 import com.example.thematicproject.models.Ingredient;
 import com.example.thematicproject.models.Recipe;
+import com.example.thematicproject.repositories.IngredientRepository;
 import com.example.thematicproject.repositories.RecipeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class RecipeService {
-    private final RecipeRepository recipeRepository;
+
+    @Autowired
+    private RecipeRepository recipeRepository;
+
+    @Autowired
+    private IngredientRepository ingredientRepository;
+
 
     @Autowired
     public RecipeService(RecipeRepository recipeRepository) {
@@ -60,14 +68,6 @@ public class RecipeService {
     }
 
 
-
-    public List<Recipe> findRecipesByIngredients(List<String> ingredients) {
-        // This is a pseudo-logic, adjust it based on your actual repository and query.
-        return recipeRepository.findAll().stream()
-                .filter(recipe -> recipe.getIngredients().containsAll(ingredients))
-                .collect(Collectors.toList());
-    }
-
     public Recipe createRecipe(RecipeDTO recipeDTO) {
         Recipe recipe = new Recipe();
         recipe.setName(recipeDTO.getName());
@@ -79,4 +79,39 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
+    public List<Recipe> getRecipeByIngredientName(String ingredientName) {
+        return recipeRepository.findByIngredients_NameIgnoreCase(ingredientName);
+    }
+
+
+    public Recipe createRecipeWithIngredients(String name, List<String> ingredientNames) {
+        Recipe recipe = new Recipe();
+        recipe.setName(name);
+
+        List<Ingredient> ingredients = new ArrayList<>();
+
+        for (String ingredientName : ingredientNames) {
+            Ingredient ingredient = ingredientRepository.findByName(ingredientName);
+
+            if (ingredient == null) {
+                ingredient = new Ingredient();
+                ingredient.setName(ingredientName);
+                ingredient = ingredientRepository.save(ingredient);
+            }
+
+            ingredients.add(ingredient);
+        }
+
+        recipe.setIngredients(ingredients);
+        return recipeRepository.save(recipe); // This saves the recipe and the join table
+    }
+
+    public List<Recipe> findRecipesByIngredients(List<String> ingredientNames) {
+        // Find recipes where the ingredients match the names in the list
+        return recipeRepository.findRecipesByIngredientNames(ingredientNames);
+    }
+
+
 }
+
+
