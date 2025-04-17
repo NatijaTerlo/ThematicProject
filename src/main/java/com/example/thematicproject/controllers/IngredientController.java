@@ -58,7 +58,6 @@ public class IngredientController {
         return ResponseEntity.ok(ingredients);
     }
 
-    // ✅ OPDATERET: Finder opskrifter baseret på liste af ingredienser
     @PostMapping("/find")
     public ResponseEntity<List<Recipe>> findRecipes(@RequestBody IngredientRequest request) {
         List<String> ingredients = request.getIngredients();
@@ -68,6 +67,7 @@ public class IngredientController {
         List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredients);
         return new ResponseEntity<>(recipes, HttpStatus.OK);
     }
+
 
 
     @PostMapping("/bulk")

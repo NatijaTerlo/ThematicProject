@@ -3,6 +3,7 @@ package com.example.thematicproject.services;
 import com.example.thematicproject.DTO.IngredientDTO;
 import com.example.thematicproject.DTO.RecipeDTO;
 
+import com.example.thematicproject.controllers.RecipeRequest;
 import com.example.thematicproject.models.Ingredient;
 import com.example.thematicproject.models.Recipe;
 import com.example.thematicproject.repositories.IngredientRepository;
@@ -106,12 +107,48 @@ public class RecipeService {
         return recipeRepository.save(recipe); // This saves the recipe and the join table
     }
 
-    public List<Recipe> findRecipesByIngredients(List<String> ingredientNames) {
-        // Find recipes where the ingredients match the names in the list
-        return recipeRepository.findRecipesByIngredientNames(ingredientNames);
+
+    public List<Recipe> createRecipesWithIngredients(List<RecipeRequest> requests) {
+        List<Recipe> result = new ArrayList<>();
+
+        for (RecipeRequest req : requests) {
+            // 1) Ensure each Ingredient exists or save it
+            List<Ingredient> ingredients = req.getIngredients().stream()
+                    .map(name -> {
+                        Ingredient existing = ingredientRepository.findByName(name);
+                        if (existing != null) return existing;
+                        Ingredient created = new Ingredient();
+                        created.setName(name);
+                        return ingredientRepository.save(created);
+                    })
+                    .collect(Collectors.toList());
+
+            // 2) Create and save the Recipe
+            Recipe r = new Recipe();
+            r.setName(req.getName());
+            r.setIngredients(ingredients);
+            result.add(recipeRepository.save(r));
+        }
+
+        return result;
     }
 
+    public List<Recipe> saveAll(List<Recipe> recipes) {
+        // Ensure that all recipes are saved, and check for errors during saving
+        try {
+            return recipeRepository.saveAll(recipes);  // Use the repository to save recipes
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error saving recipes");
+        }
+    }
+    public List<Recipe> findRecipesByIngredients(List<String> ingredientNames) {
+        List<Recipe> recipes = recipeRepository.findByIngredients_NameIn(ingredientNames);
+        System.out.println("Found Recipes: " + recipes);  // Debug log
+        return recipes;
+    }
 
 }
+
 
 

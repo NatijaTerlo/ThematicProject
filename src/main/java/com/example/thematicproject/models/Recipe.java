@@ -20,15 +20,14 @@ public class Recipe {
             joinColumns = @JoinColumn(name = "recipe_id"),
             inverseJoinColumns = @JoinColumn(name = "ingredient_id")
     )
+    private List<Ingredient> ingredients = new ArrayList<>();
 
-    private List<Ingredient> ingredients = new ArrayList<>(); // Make sure this is a List<Ingredient>
+    public Recipe() {}
 
-    public <T> Recipe(String vegetableStirFry, List<T> list) {
-
-    }
-
-    public Recipe() {
-
+    public Recipe(String name, String description, List<Ingredient> ingredients) {
+        this.name = name;
+        this.description = description;
+        this.ingredients = ingredients;
     }
 
     // Getters and Setters
@@ -63,5 +62,4 @@ public class Recipe {
     public void setDescription(String description) {
         this.description = description;
     }
-
 }

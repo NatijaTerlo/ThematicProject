@@ -108,22 +108,13 @@ public class RecipeController {
         List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredients);
         if (recipes.isEmpty()) {
             // If no recipes found, return a list of hardcoded recipes for demo purposes
-            recipes = getDemoRecipes();
+
         }
 
         return ResponseEntity.ok(recipes);
     }
 
-    // Example hardcoded recipes to demonstrate functionality when no results found
-    private List<Recipe> getDemoRecipes() {
-        List<Recipe> demoRecipes = new ArrayList<>();
 
-        demoRecipes.add(new Recipe("Spaghetti Bolognese", Arrays.asList("Spaghetti", "Ground Beef", "Tomato Sauce", "Onion", "Garlic")));
-        demoRecipes.add(new Recipe("Vegetable Stir Fry", Arrays.asList("Carrot", "Broccoli", "Soy Sauce", "Tofu", "Garlic")));
-        demoRecipes.add(new Recipe("Chicken Salad", Arrays.asList("Chicken", "Lettuce", "Tomatoes", "Cucumber", "Olive Oil")));
-
-        return demoRecipes;
-    }
 
     @PostMapping(consumes = "application/json")
     public ResponseEntity<Recipe> addRecipe(@RequestBody RecipeDTO recipeDTO) {
@@ -134,17 +125,59 @@ public class RecipeController {
 
     @GetMapping("/getrecipebyingredients")
     public ResponseEntity<List<Recipe>> getRecipeByIngredients(@RequestParam List<String> ingredientNames) {
+        System.out.println("Ingredient names: " + ingredientNames);  // Debugging output
         List<Ingredient> ingredients = ingredientRepository.findByNameIn(ingredientNames);
 
         if (ingredients.isEmpty()) {
+            System.out.println("No ingredients found!");  // Debugging output
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
         List<Recipe> recipes = recipeRepository.findByIngredientsIn(ingredients);
-
+        System.out.println("Found recipes: " + recipes);  // Debugging output
         return ResponseEntity.ok(recipes);
     }
 
+    @PostMapping("/bulk")
+    public ResponseEntity<List<Recipe>> createRecipes(@RequestBody List<Recipe> recipes) {
+        // Save all ingredients that are not already in the database
+        for (Recipe recipe : recipes) {
+            for (Ingredient ingredient : recipe.getIngredients()) {
+                if (ingredient.getId() == null) {
+                    // Check if the ingredient already exists by name
+                    Optional<Ingredient> existingIngredient = Optional.ofNullable(ingredientRepository.findByName(ingredient.getName()));
+                    if (existingIngredient.isEmpty()) {
+                        ingredientRepository.save(ingredient);  // Save the ingredient if it's new
+                    } else {
+                        ingredient.setId(existingIngredient.get().getId());  // Set the existing ingredient's ID if it's found
+                    }
+                }
+            }
+        }
+
+        // Save the recipes after the ingredients are saved
+        List<Recipe> savedRecipes = recipeService.saveAll(recipes);
+        return ResponseEntity.ok(savedRecipes);
+    }
+
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Recipe>> searchRecipesByIngredients(@RequestParam List<String> ingredientNames) {
+        List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredientNames);
+
+        if (recipes.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        // Map the ingredients to their names before returning the response
+        for (Recipe recipe : recipes) {
+            for (Ingredient ingredient : recipe.getIngredients()) {
+                ingredient.setName(ingredient.getName()); // Make sure ingredient names are included
+            }
+        }
+
+        return ResponseEntity.ok(recipes);
+    }
 
 }
 

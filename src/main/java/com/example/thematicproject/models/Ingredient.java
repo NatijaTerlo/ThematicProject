@@ -17,14 +17,14 @@ public class Ingredient {
     @ManyToMany(mappedBy = "ingredients")
     private List<Recipe> recipes = new ArrayList<>();
 
-    // ✅ Nødvendig for Spring (Jackson)
+
     public Ingredient() {}
 
     public Ingredient(String name) {
         this.name = name;
     }
 
-    // ✅ Getters og Setters er nødvendige
+
     public Long getId() {
         return id;
     }
