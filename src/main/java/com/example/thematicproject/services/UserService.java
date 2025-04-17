@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class UserService {
 
@@ -39,22 +41,23 @@ public class UserService {
         return "User registered successfully";
     }
 
-    // Login an existing user
     public String loginUser(String username, String password) {
         // Find the user by username
-        User user = userRepository.findByUsername(username);
+        Optional<User> user = userRepository.findByUsername(username);
 
         // Check if the user exists
-        if (user == null) {
+        if (user.isEmpty()) {
             return "User not found";
         }
 
         // Compare the provided password with the encrypted password
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        if (!passwordEncoder.matches(password, user.get().getPassword())) {
             return "Invalid password";
         }
 
         // Return success message (or JWT in a real application)
         return "Login successful";
     }
+
+
 }

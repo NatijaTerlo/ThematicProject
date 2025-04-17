@@ -15,20 +15,20 @@ public class IngredientService {
         this.ingredientRepository = ingredientRepository;
     }
 
-    public List<Ingredient> getAllIngredients() {
-        return ingredientRepository.findAll();
+    public Ingredient saveIngredient(Ingredient ingredient) {
+        return ingredientRepository.save(ingredient);
     }
 
     public Optional<Ingredient> getIngredientById(Long id) {
         return ingredientRepository.findById(id);
     }
 
-    public Ingredient saveIngredient(Ingredient ingredient) {
-        return ingredientRepository.save(ingredient);
-    }
-
     public void deleteIngredient(Long id) {
         ingredientRepository.deleteById(id);
+    }
+
+    public List<Ingredient> getAllIngredients() {
+        return ingredientRepository.findAll();
     }
 }
 

@@ -1,35 +1,49 @@
 package com.example.thematicproject.models;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import org.springframework.lang.NonNull;
 
-import java.util.Set;
+import java.util.List;
 
 @Entity
 public class Recipe {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NonNull
     private String name;
+    private String description;
 
-    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private Set<Ingredient> ingredients;
+    @ManyToMany
+    @JoinTable(
+            name = "recipe_ingredients",
+            joinColumns = @JoinColumn(name = "recipe_id"),
+            inverseJoinColumns = @JoinColumn(name = "ingredient_id")
+    )
+    private List<Ingredient> ingredients; // Make sure this is a List<Ingredient>
 
-    // Constructor
-    public Recipe() {}
+    public <T> Recipe(String vegetableStirFry, List<T> list) {
+
+    }
+
+    public Recipe() {
+
+    }
 
     // Getters and Setters
-    public Long getId() {
-        return id;
+    public List<Ingredient> getIngredients() {
+        return ingredients;
+    }
+
+    public void setIngredients(List<Ingredient> ingredients) {
+        this.ingredients = ingredients;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getName() {
@@ -40,11 +54,12 @@ public class Recipe {
         this.name = name;
     }
 
-    public Set<Ingredient> getIngredients() {
-        return ingredients;
+    public String getDescription() {
+        return description;
     }
 
-    public void setIngredients(Set<Ingredient> ingredients) {
-        this.ingredients = ingredients;
+    public void setDescription(String description) {
+        this.description = description;
     }
+
 }

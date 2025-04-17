@@ -1,6 +1,5 @@
 package com.example.thematicproject.controllers;
-
-
+import com.example.thematicproject.DTO.UserDTO;
 import com.example.thematicproject.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "http://localhost:63342")
 public class UserController {
 
     @Autowired
@@ -15,18 +15,27 @@ public class UserController {
 
     // Register new user
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestParam String username,
-                                               @RequestParam String email,
-                                               @RequestParam String password) {
-        String result = userService.registerUser(username, email, password);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<String> registerUser(@RequestBody UserDTO userDTO) {
+        String result = userService.registerUser(
+                userDTO.getUsername(),
+                userDTO.getEmail(),
+                userDTO.getPassword()
+        );
+        return ResponseEntity.status(201).body(result);
     }
 
     // Login user
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestParam String username,
-                                            @RequestParam String password) {
-        String result = userService.loginUser(username, password);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<String> loginUser(@RequestBody UserDTO userDTO) {
+        String result = userService.loginUser(
+                userDTO.getUsername(),
+                userDTO.getPassword()
+        );
+
+        if ("Login successful".equals(result)) {
+            return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.status(401).body(result);
+        }
     }
 }

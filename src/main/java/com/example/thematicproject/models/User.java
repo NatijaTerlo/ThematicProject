@@ -1,9 +1,9 @@
+// User.java
+
 package com.example.thematicproject.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import java.util.Set;
 
 @Entity
 public class User {
@@ -13,12 +13,27 @@ public class User {
     private Long id;
 
     private String username;
-
     private String email;
-
     private String password;
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_favorites",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "recipe_id")
+    )
+    private Set<Recipe> favoriteRecipes;  // This will store user's favorite recipes
+
     // Getters and setters
+
+    public Set<Recipe> getFavoriteRecipes() {
+        return favoriteRecipes;
+    }
+
+    public void setFavoriteRecipes(Set<Recipe> favoriteRecipes) {
+        this.favoriteRecipes = favoriteRecipes;
+    }
+
     public Long getId() {
         return id;
     }
@@ -50,4 +65,6 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+
 }

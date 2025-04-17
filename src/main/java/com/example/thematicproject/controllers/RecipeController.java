@@ -1,70 +1,124 @@
 package com.example.thematicproject.controllers;
 
+import com.example.thematicproject.DTO.RecipeDTO;
 import com.example.thematicproject.models.Recipe;
-
-import com.example.thematicproject.services.IngredientService;
+import com.example.thematicproject.models.User;
+import com.example.thematicproject.repositories.RecipeRepository;
+import com.example.thematicproject.repositories.UserRepository;
 import com.example.thematicproject.services.RecipeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
-@CrossOrigin(origins = "http://localhost:63342") // Allowed CORS for local frontend
+@CrossOrigin(origins = "http://localhost:63342")
 @RestController
-@RequestMapping("/recipes") // Base URL for all endpoints
+@RequestMapping("/api/recipes")
 public class RecipeController {
 
     private final RecipeService recipeService;
-    private final IngredientService ingredientService;
+    private final UserRepository userRepository;
+    private final RecipeRepository recipeRepository;
 
-    public RecipeController(RecipeService recipeService, IngredientService ingredientService) {
+    public RecipeController(RecipeService recipeService, UserRepository userRepository, RecipeRepository recipeRepository) {
         this.recipeService = recipeService;
-        this.ingredientService = ingredientService;
+        this.userRepository = userRepository;
+        this.recipeRepository = recipeRepository;
     }
 
-    // GET: Fetch all recipes
+    @PostMapping(consumes = "application/json")
+    public ResponseEntity<Recipe> addRecipe(@RequestBody RecipeDTO recipeDTO) {
+        Recipe newRecipe = recipeService.createRecipe(recipeDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newRecipe);
+    }
+
     @GetMapping
     public List<Recipe> getAllRecipes() {
         return recipeService.getAllRecipes();
     }
 
-    // GET: Fetch a recipe by ID
     @GetMapping("/{id}")
     public ResponseEntity<Recipe> getRecipeById(@PathVariable Long id) {
         return recipeService.getRecipeById(id)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // DELETE: Delete a recipe by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRecipe(@PathVariable Long id) {
-        boolean isDeleted = recipeService.deleteRecipe(id); // Ensure delete logic in service layer
+        boolean isDeleted = recipeService.deleteRecipe(id);
         return isDeleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/find")
-    public ResponseEntity<List<Recipe>> findRecipes(@RequestBody IngredientRequest request) {
-        List<String> ingredients = request.getIngredients();
-        if (ingredients == null || ingredients.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    @PostMapping("/{userId}/add-to-favorites")
+    public ResponseEntity<String> addRecipeToFavorites(@PathVariable Long userId, @RequestBody Long recipeId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        Optional<Recipe> recipeOptional = recipeRepository.findById(recipeId);
+
+        if (userOptional.isPresent() && recipeOptional.isPresent()) {
+            User user = userOptional.get();
+            Recipe recipe = recipeOptional.get();
+
+            user.getFavoriteRecipes().add(recipe);
+            userRepository.save(user);
+
+            return ResponseEntity.ok("Recipe added to favorites!");
         }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User or Recipe not found!");
+    }
+
+    @DeleteMapping("/{userId}/remove-from-favorites/{recipeId}")
+    public ResponseEntity<String> removeRecipeFromFavorites(@PathVariable Long userId, @PathVariable Long recipeId) {
+        Optional<User> userOptional = userRepository.findById(userId);
+        Optional<Recipe> recipeOptional = recipeRepository.findById(recipeId);
+
+        if (userOptional.isPresent() && recipeOptional.isPresent()) {
+            User user = userOptional.get();
+            Recipe recipe = recipeOptional.get();
+
+            user.getFavoriteRecipes().remove(recipe);
+            userRepository.save(user);
+
+            return ResponseEntity.ok("Recipe removed from favorites!");
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User or Recipe not found!");
+    }
+
+    @GetMapping("/{userId}/favorites")
+    public ResponseEntity<ArrayList<Recipe>> getUserFavorites(@PathVariable Long userId) {
+        return userRepository.findById(userId)
+                .map(user -> ResponseEntity.ok(new ArrayList<>(user.getFavoriteRecipes())))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    @PostMapping("/find")
+    public ResponseEntity<List<Recipe>> findRecipes(@RequestBody List<String> ingredients) {
+        if (ingredients == null || ingredients.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ArrayList<>());
+        }
+
+        // Call service to find recipes by ingredients
         List<Recipe> recipes = recipeService.findRecipesByIngredients(ingredients);
-        return new ResponseEntity<>(recipes, HttpStatus.OK);
+        if (recipes.isEmpty()) {
+            // If no recipes found, return a list of hardcoded recipes for demo purposes
+            recipes = getDemoRecipes();
+        }
+
+        return ResponseEntity.ok(recipes);
     }
 
+    // Example hardcoded recipes to demonstrate functionality when no results found
+    private List<Recipe> getDemoRecipes() {
+        List<Recipe> demoRecipes = new ArrayList<>();
 
-    // POST: Create a new recipe
-    @PostMapping
-    public ResponseEntity<String> createRecipe(@RequestBody Recipe recipe) {
-        recipeService.createRecipe(recipe);
-        return new ResponseEntity<>("Recipe created successfully", HttpStatus.CREATED); // 201 Created
-    }
+        demoRecipes.add(new Recipe("Spaghetti Bolognese", Arrays.asList("Spaghetti", "Ground Beef", "Tomato Sauce", "Onion", "Garlic")));
+        demoRecipes.add(new Recipe("Vegetable Stir Fry", Arrays.asList("Carrot", "Broccoli", "Soy Sauce", "Tofu", "Garlic")));
+        demoRecipes.add(new Recipe("Chicken Salad", Arrays.asList("Chicken", "Lettuce", "Tomatoes", "Cucumber", "Olive Oil")));
 
-    // GET: Test connection
-    @GetMapping("/test")
-    public String testConnection() {
-        return "✅ Backend is up!";
+        return demoRecipes;
     }
 }

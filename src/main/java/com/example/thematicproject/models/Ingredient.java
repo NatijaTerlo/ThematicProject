@@ -1,19 +1,15 @@
 package com.example.thematicproject.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
-@Entity
+@Entity  // Add this annotation to mark this as a JPA entity
 public class Ingredient {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id  // Assuming you have an identifier for Ingredient
     private Long id;
-
     private String name;
-
-    @ManyToOne
-    @JoinColumn(name = "recipe_id")
-    private Recipe recipe;
+    private String quantity;
 
     // Getters and Setters
     public Long getId() {
@@ -32,11 +28,11 @@ public class Ingredient {
         this.name = name;
     }
 
-    public Recipe getRecipe() {
-        return recipe;
+    public String getQuantity() {
+        return quantity;
     }
 
-    public void setRecipe(Recipe recipe) {
-        this.recipe = recipe;
+    public void setQuantity(String quantity) {
+        this.quantity = quantity;
     }
 }
